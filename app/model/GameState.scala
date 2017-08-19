@@ -1,17 +1,8 @@
 package model
 
-object GameState {
-
-  val TOTAL_TURNS = 1000
-  val STARTING_DYNAMITE = 100
-
+class GameState(pointsToWin: Int, totalTurns: Int, startingDynamite: Int) {
   var botHistory = List.empty[GameMove.Value]
   var opponentHistory = List.empty[GameMove.Value]
-
-  def reset = {
-    botHistory = List.empty[GameMove.Value]
-    opponentHistory = List.empty[GameMove.Value]
-  }
 
   def getHistory = {
     botHistory
@@ -21,11 +12,15 @@ object GameState {
     opponentHistory
   }
 
+  def getPointsLeftToWin = {
+    pointsToWin
+  }
+
   def getRemainingTurns = {
-    TOTAL_TURNS - botHistory.length
+    totalTurns - botHistory.length
   }
 
   def getRemainingDynamite = {
-    STARTING_DYNAMITE - botHistory.count(_ == GameMove.DYNAMITE)
+    startingDynamite - botHistory.count(_ == GameMove.DYNAMITE)
   }
 }

@@ -1,6 +1,13 @@
 package model
 
+
 object GameLogic {
+  val DEFAULT_POINTS_TO_WIN: Int = 1000
+  val DEFAULT_TOTAL_TURNS: Int = 2000
+  val DEFAULT_STARTING_DYNAMITE: Int = 100
+
+  var gameState = new GameState(pointsToWin = DEFAULT_POINTS_TO_WIN, totalTurns = DEFAULT_TOTAL_TURNS, startingDynamite = DEFAULT_STARTING_DYNAMITE)
+
   val winningMoveAgainst = Map(
     GameMove.ROCK -> GameMove.PAPER,
     GameMove.PAPER -> GameMove.SCISSORS,

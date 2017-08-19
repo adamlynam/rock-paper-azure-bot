@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject._
 
-import model.GameState
+import model.{GameLogic, GameState}
 import play.api.mvc._
 
 /**
@@ -20,7 +20,11 @@ class StartController @Inject()(cc: ControllerComponents) extends AbstractContro
    * a path of `/`.
    */
   def start() = Action { implicit request: Request[AnyContent] =>
-    GameState.reset
+    val json = request.body.asJson.get
+    GameLogic.gameState = new GameState(
+      pointsToWin = (json \ "pointsToWin").asOpt[Int].get,
+      totalTurns = (json \ "maxRounds").asOpt[Int].get,
+      startingDynamite = (json \ "dynamiteCount").asOpt[Int].get)
     Ok
   }
 }

@@ -1,5 +1,7 @@
 package model
 
+import play.api.libs.json._
+
 import scala.util.Random
 
 object GameMove extends Enumeration {
@@ -10,7 +12,7 @@ object GameMove extends Enumeration {
   }
 
   def probabalisticDynamiteMove: GameMove.Value = {
-    if (GameState.getRemainingDynamite > 0 && GameState.getRemainingTurns > 0 && (new Random).nextDouble < GameState.getRemainingDynamite / GameState.getRemainingTurns) {
+    if (GameLogic.gameState.getRemainingDynamite > 0 && GameLogic.gameState.getRemainingTurns > 0 && (new Random).nextDouble < GameLogic.gameState.getRemainingDynamite / GameLogic.gameState.getRemainingTurns) {
       GameMove.DYNAMITE
     }
     else {
@@ -20,11 +22,13 @@ object GameMove extends Enumeration {
   }
 
   def copyOpponentMove: GameMove.Value = {
-    if (GameState.opponentHistory.length > 0) {
-      GameState.opponentHistory.last
+    if (GameLogic.gameState.opponentHistory.length > 0) {
+      GameLogic.gameState.opponentHistory.last
     }
     else {
       values.toVector((new Random).nextInt(values.size))
     }
   }
+
+  implicit val moveFormat: Format[GameMove.Value] = Format(Reads.enumNameReads(GameMove), Writes.enumNameWrites)
 }

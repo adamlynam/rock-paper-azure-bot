@@ -5,7 +5,8 @@ import akka.stream.ActorMaterializer
 import model.GameMove
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
-import play.api.test.Helpers.{GET, OK, POST, defaultAwaitTimeout, status, stubControllerComponents}
+import play.api.libs.json.Json.{fromJson, toJson}
+import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Injecting}
 
 class MoveControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting {
@@ -19,7 +20,8 @@ class MoveControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
 
       val response = controller.move().apply(FakeRequest(GET, "/move"))
       status(response) mustBe OK
-      GameMove.values contains GameMove.withName(play.api.test.Helpers.contentAsString(response))
+      contentType(response).get mustBe "application/json"
+      GameMove.values contains fromJson[GameMove.Value](contentAsJson(response)).get
     }
   }
 
@@ -27,7 +29,10 @@ class MoveControllerSpec extends PlaySpec with GuiceOneAppPerTest with Injecting
     "deliver the previous move from the opponent" in {
       val controller = new MoveController(stubControllerComponents())
 
-      status(controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withTextBody(GameMove.ROCK.toString))) mustBe OK
+      status(controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withJsonBody(
+        toJson(Map(
+          "opponentLastMove" -> toJson(GameMove.ROCK)
+        ))))) mustBe OK
     }
   }
 }

@@ -2,6 +2,8 @@ package model
 
 import controllers.{MoveController, StartController}
 import org.scalatestplus.play.PlaySpec
+import play.api.libs.json.Json
+import play.api.libs.json.Json.toJson
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, POST, defaultAwaitTimeout, stubControllerComponents}
 
@@ -58,36 +60,48 @@ class GameLogicSpec extends PlaySpec {
 
   "GameLogic totalWins" should {
     "calculate the number of wins the bot has had directly after starting" in {
-      new StartController(stubControllerComponents()).start().apply(FakeRequest(GET, "/start"))
+      GameLogic.gameState = new GameState(pointsToWin = 1000, totalTurns = 2000, startingDynamite = 100)
 
-      GameLogic.calculateWins(GameState.getHistory, GameState.opponentHistory) mustBe 0
+      GameLogic.calculateWins(GameLogic.gameState.getHistory, GameLogic.gameState.opponentHistory) mustBe 0
     }
 
     "calculate the number of wins the bot has had after winning a game" in {
-      new StartController(stubControllerComponents()).start().apply(FakeRequest(GET, "/start"))
+      GameLogic.gameState = new GameState(pointsToWin = 1000, totalTurns = 2000, startingDynamite = 100)
       val controller = new MoveController(stubControllerComponents())
-      val moveMade = GameMove.withName(play.api.test.Helpers.contentAsString(controller.move().apply(FakeRequest(GET, "/move"))))
-      controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withTextBody(GameLogic.losingMoveAgainst(moveMade).toString))
-
-      GameLogic.calculateWins(GameState.getHistory, GameState.opponentHistory) mustBe 1
+      Json.fromJson[GameMove.Value](play.api.test.Helpers.contentAsJson(controller.move().apply(FakeRequest(GET, "/move")))).map(
+        moveMade => {
+          controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withJsonBody(lastMoveJson(GameLogic.losingMoveAgainst(moveMade))))
+          GameLogic.calculateWins(GameLogic.gameState.getHistory, GameLogic.gameState.opponentHistory) mustBe 1
+        }
+      )
     }
 
     "calculate the number of wins the bot has had after losing a game" in {
-      new StartController(stubControllerComponents()).start().apply(FakeRequest(GET, "/start"))
+      GameLogic.gameState = new GameState(pointsToWin = 1000, totalTurns = 2000, startingDynamite = 100)
       val controller = new MoveController(stubControllerComponents())
-      val moveMade = GameMove.withName(play.api.test.Helpers.contentAsString(controller.move().apply(FakeRequest(GET, "/move"))))
-      controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withTextBody(GameLogic.winningMoveAgainst(moveMade).toString))
-
-      GameLogic.calculateWins(GameState.getHistory, GameState.opponentHistory) mustBe 0
+      Json.fromJson[GameMove.Value](play.api.test.Helpers.contentAsJson(controller.move().apply(FakeRequest(GET, "/move")))).map(
+        moveMade => {
+          controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withJsonBody(lastMoveJson(GameLogic.winningMoveAgainst(moveMade))))
+          GameLogic.calculateWins(GameLogic.gameState.getHistory, GameLogic.gameState.opponentHistory) mustBe 0
+        }
+      )
     }
 
     "calculate the number of wins the bot has had after drawing a game" in {
-      new StartController(stubControllerComponents()).start().apply(FakeRequest(GET, "/start"))
+      GameLogic.gameState = new GameState(pointsToWin = 1000, totalTurns = 2000, startingDynamite = 100)
       val controller = new MoveController(stubControllerComponents())
-      val moveMade = GameMove.withName(play.api.test.Helpers.contentAsString(controller.move().apply(FakeRequest(GET, "/move"))))
-      controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withTextBody(moveMade.toString))
-
-      GameLogic.calculateWins(GameState.getHistory, GameState.opponentHistory) mustBe 0
+      Json.fromJson[GameMove.Value](play.api.test.Helpers.contentAsJson(controller.move().apply(FakeRequest(GET, "/move")))).map(
+        moveMade => {
+          controller.lastOpponentMove().apply(FakeRequest(POST, "/move").withJsonBody(lastMoveJson(moveMade)))
+          GameLogic.calculateWins(GameLogic.gameState.getHistory, GameLogic.gameState.opponentHistory) mustBe 0
+        }
+      )
     }
+  }
+
+  def lastMoveJson(gameMove: GameMove.Value): _root_.play.api.libs.json.JsValue = {
+    toJson(Map(
+      "opponentLastMove" -> toJson(gameMove)
+    ))
   }
 }

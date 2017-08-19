@@ -2,18 +2,18 @@ package fakes
 
 import javax.inject.Inject
 
-import model.{GameMove, GameState}
+import model.{GameLogic, GameMove}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents, Request}
 
 class FakeMoveController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
   def move(moveToMake: GameMove.Value) = Action { implicit request: Request[AnyContent] =>
-    GameState.botHistory = GameState.botHistory :+ moveToMake
+    GameLogic.gameState.botHistory = GameLogic.gameState.botHistory :+ moveToMake
     Ok(moveToMake.toString)
   }
 
   def lastOpponentMove() = Action { implicit request: Request[AnyContent] =>
-    GameState.opponentHistory = GameState.opponentHistory :+ GameMove.withName(request.body.asText.get)
+    GameLogic.gameState.opponentHistory = GameLogic.gameState.opponentHistory :+ GameMove.withName(request.body.asText.get)
     Ok
   }
 }
